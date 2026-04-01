@@ -8,6 +8,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # This allows your HTML file to talk to the API
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
