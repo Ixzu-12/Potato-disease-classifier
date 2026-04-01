@@ -5,6 +5,12 @@ from io import BytesIO
 from PIL import Image
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # This allows your HTML file to talk to the API
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load model (make sure the filename matches exactly)
 model = tf.keras.models.load_model('plant_model.h5')
