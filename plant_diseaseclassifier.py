@@ -191,7 +191,7 @@ plt.figure(figsize=(15,15))
 for images, labels in test_ds.take(1):
     for i in range(9):
         ax = plt.subplot(3, 3, i + 1)
-        # We pass the actual numpy array to the fixed predict function
+        
         img_data = images[i].numpy()
         plt.imshow(img_data.astype("uint8"))
 
@@ -209,96 +209,9 @@ save_path = '/content/drive/MyDrive/plant_disease_classifier'
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
-# Saving as a .h5 file or a SavedModel folder
+
 model.save(f'{save_path}/plant_model.h5')
-print("Model saved to Google Drive!")
+
 
 model.save('plant_model.h5')
 
-from google.colab import files
-files.download('plant_model.h5')
-
-!pip install fastapi uvicorn pyngrok nest_asyncio python-multipart
-
-import tensorflow as tf
-
-# 1. Load the actual file I see in your sidebar
-Model = tf.keras.models.load_model('plant_model.h5')
-
-# 2. Make sure your class names are defined here too!
-# Replace these with your actual 3 labels (e.g., Potato_Blight, etc.)
-class_names = ['Early Blight', 'Late Blight', 'Healthy']
-
-print("✅ Model is now loaded into memory!")
-
-import nest_asyncio
-import uvicorn
-from fastapi import FastAPI, File, UploadFile
-import numpy as np
-from io import BytesIO
-from PIL import Image
-import tensorflow as tf
-import threading
-
-# 1. Fix the Colab asyncio loop issue
-nest_asyncio.apply()
-
-app = FastAPI()
-
-# --- PREDICTION LOGIC FUNCTIONS ---
-
-def read_file_as_image(data) -> np.ndarray:
-    """Converts uploaded bytes into a resized numpy array for the model."""
-    image = Image.open(BytesIO(data)).convert("RGB").resize((256, 256))
-    return np.array(image)
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    # A. Read the incoming file
-    image = read_file_as_image(await file.read())
-
-    # B. Preprocess: Scale (0-1) and add Batch Dimension (1, 256, 256, 3)
-    # Note: Make sure your training used 1/255 rescaling!
-    img_batch = np.expand_dims(image, 0)
-
-    # C. Prediction using the 'model' variable from your previous cells
-    predictions = Model.predict(img_batch)
-
-    # D. Get results using your 'class_names' list
-    predicted_class = class_names[np.argmax(predictions[0])]
-    confidence = np.max(predictions[0])
-
-    return {
-        "class": predicted_class,
-        "confidence": float(round(confidence * 100, 2))
-    }
-
-@app.get("/ping")
-async def ping():
-    return {"status": "Plant Classifier API is Online"}
-
-# --- THE BACKGROUND SERVER FIX ---
-
-def run_api():
-    # Use 0.0.0.0 so the tunnel can find the server
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
-    server = uvicorn.Server(config)
-    server.run()
-
-# This starts the server without blocking your notebook
-if 'api_thread' not in globals() or not api_thread.is_alive():
-    api_thread = threading.Thread(target=run_api)
-    api_thread.start()
-    print("✅ FastAPI is now running in the background on port 8000!")
-else:
-    print("⚠️ API is already running. To update code, restart the session.")
-
-# 1. Install localtunnel if you haven't already
-!npm install -g localtunnel
-
-# 2. Get your "Password" IP (this is required to unlock the link)
-import urllib
-print("Your Tunnel Password (IP) is:", urllib.request.urlopen('https://ipv4.icanhazip.com').read().decode('utf8').strip())
-
-# 3. Start the tunnel to Port 8000
-!lt --port 8000
