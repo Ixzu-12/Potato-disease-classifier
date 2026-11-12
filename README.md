@@ -1,5 +1,5 @@
 # Potato-disease-classifier
-A deep learning model for predicting wether plant(potato) is healthy or not
+A deep learning model for predicting if plant(potato) is healthy or not
 # 🌿 Plant Disease Classifier API
 
 A full-stack Machine Learning application that identifies plant diseases from leaf images using **Convolutional Neural Networks (CNN)** and serves predictions via a **FastAPI** web server.
